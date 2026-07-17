@@ -278,8 +278,7 @@ export function convertHtmlToBloggerXml(
            id.includes('copyright') || 
            id.includes('bottom') ||
            className.includes('footer') || 
-           className.includes('copyright') || 
-           className.includes('bottom');
+           className.includes('copyright');
   };
 
   // Helper to check if an element is script or style
@@ -310,7 +309,35 @@ export function convertHtmlToBloggerXml(
   let middleElements: Element[] = [];
   let footerElements: Element[] = [];
 
-  if (firstContentIndex !== -1 && lastContentIndex !== -1 && firstContentIndex <= lastContentIndex) {
+  // Cari elemen footer utama
+  let footerIndex = -1;
+  for (let i = 0; i < bodyChildren.length; i++) {
+    const child = bodyChildren[i];
+    const tagName = child.tagName.toLowerCase();
+    const id = (child.id || '').toLowerCase();
+    const className = (child.className || '').toLowerCase();
+    if (tagName === 'footer' || id === 'footer' || className === 'footer' || className.includes('main-footer')) {
+      footerIndex = i;
+      break;
+    }
+  }
+
+  // Fallback ke isFooterElement jika tidak ada elemen footer murni
+  if (footerIndex === -1) {
+    for (let i = 0; i < bodyChildren.length; i++) {
+      const child = bodyChildren[i];
+      if (isFooterElement(child)) {
+        footerIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (footerIndex !== -1 && firstContentIndex !== -1 && firstContentIndex < footerIndex) {
+    headerElements = bodyChildren.slice(0, firstContentIndex);
+    middleElements = bodyChildren.slice(firstContentIndex, footerIndex);
+    footerElements = bodyChildren.slice(footerIndex);
+  } else if (firstContentIndex !== -1 && lastContentIndex !== -1 && firstContentIndex <= lastContentIndex) {
     headerElements = bodyChildren.slice(0, firstContentIndex);
     middleElements = bodyChildren.slice(firstContentIndex, lastContentIndex + 1);
     footerElements = bodyChildren.slice(lastContentIndex + 1);
