@@ -1,0 +1,6 @@
+{
+  "name": "Canvas HTML to Blogger Template Builder",
+  "description": "A web utility to convert Gemini Canvas HTML exports into fully compliant, valid Blogger XML templates automatically.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
