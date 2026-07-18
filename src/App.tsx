@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Info, X, Menu, Cpu, RefreshCw, Heart, Settings, FileText
+  Info, X, Menu, Cpu, RefreshCw, Heart, Settings, FileText, Lock
 } from 'lucide-react';
 import { ConverterSettings, ConversionHistoryItem, ConversionStats } from './types';
 import ConverterPage from './components/ConverterPage';
@@ -32,6 +32,43 @@ export default function App() {
   const [stats, setStats] = useState<ConversionStats>(DEFAULT_STATS);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('pd_auth') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleVerifyPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordInput.trim()) return;
+
+    setIsVerifying(true);
+    setAuthError('');
+
+    try {
+      const response = await fetch('/api/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: passwordInput.trim() }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('pd_auth', 'true');
+      } else {
+        setAuthError(data.error || 'Password salah!');
+      }
+    } catch (err) {
+      setAuthError('Gagal menghubungkan ke server untuk verifikasi.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   // Initialize state from local storage
   useEffect(() => {
@@ -113,6 +150,63 @@ export default function App() {
     setStats(DEFAULT_STATS);
     localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(DEFAULT_STATS));
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-xl space-y-6 animate-fade-in">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-[#fe4c6f]/10 text-[#fe4c6f] flex items-center justify-center shadow-inner">
+              <Lock size={28} className="animate-bounce" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Website Terkunci</h2>
+              <p className="text-xs text-slate-500 mt-1">Silakan masukkan password untuk mengakses konverter.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleVerifyPassword} className="space-y-4">
+            <div className="space-y-1.5">
+              <label htmlFor="password-input" className="text-xs font-bold text-slate-600 block">Password</label>
+              <input
+                id="password-input"
+                type="password"
+                placeholder="Masukkan password di sini..."
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                disabled={isVerifying}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#fe4c6f] text-sm font-semibold transition disabled:bg-slate-50"
+              />
+              {authError && (
+                <p className="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                  <span>⚠️</span> {authError}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isVerifying}
+              className="w-full py-3 bg-[#fe4c6f] hover:bg-[#e03a5a] text-white font-extrabold rounded-xl transition cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed text-sm shadow-md shadow-[#fe4c6f]/20 flex items-center justify-center gap-2"
+            >
+              {isVerifying ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  Memverifikasi...
+                </>
+              ) : (
+                'Buka Akses'
+              )}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-100 text-center">
+            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">&copy; 2026 Karya Prajurit Digital</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
