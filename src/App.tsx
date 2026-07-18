@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Play, History, BookOpen, Settings, Info, X, Menu, Cpu, Github, ExternalLink, RefreshCw
+  Info, X, Menu, Cpu, RefreshCw, Heart, Settings, FileText
 } from 'lucide-react';
 import { ConverterSettings, ConversionHistoryItem, ConversionStats } from './types';
-import Dashboard from './components/Dashboard';
 import ConverterPage from './components/ConverterPage';
-import HistoryPage from './components/HistoryPage';
-import Documentation from './components/Documentation';
-import SettingsPage from './components/SettingsPage';
 
 const STORAGE_KEYS = {
   SETTINGS: 'canvas_blogger_settings',
@@ -31,7 +27,6 @@ const DEFAULT_STATS: ConversionStats = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [settings, setSettings] = useState<ConverterSettings>(DEFAULT_SETTINGS);
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [stats, setStats] = useState<ConversionStats>(DEFAULT_STATS);
@@ -114,68 +109,16 @@ export default function App() {
     }
   };
 
-  const handleDeleteHistoryItem = (id: string) => {
-    const updated = history.filter(item => item.id !== id);
-    setHistory(updated);
-    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(updated));
-  };
-
-  const handleClearAllHistory = () => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus seluruh riwayat konversi?')) {
-      setHistory([]);
-      localStorage.removeItem(STORAGE_KEYS.HISTORY);
-    }
-  };
-
   const handleResetAllStats = () => {
-    if (window.confirm('Apakah Anda yakin ingin menyetel ulang seluruh statistik dasbor?')) {
-      setStats(DEFAULT_STATS);
-      localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(DEFAULT_STATS));
-    }
+    setStats(DEFAULT_STATS);
+    localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(DEFAULT_STATS));
   };
-
-  const renderActivePage = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard stats={stats} onNavigate={setActiveTab} />;
-      case 'converter':
-        return <ConverterPage settings={settings} onSaveHistory={handleSaveHistory} />;
-      case 'history':
-        return (
-          <HistoryPage 
-            history={history} 
-            onDeleteHistoryItem={handleDeleteHistoryItem} 
-            onClearAllHistory={handleClearAllHistory} 
-          />
-        );
-      case 'documentation':
-        return <Documentation />;
-      case 'settings':
-        return (
-          <SettingsPage 
-            settings={settings} 
-            onUpdateSettings={handleUpdateSettings} 
-            onResetSettings={handleResetSettings} 
-          />
-        );
-      default:
-        return <Dashboard stats={stats} onNavigate={setActiveTab} />;
-    }
-  };
-
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { id: 'converter', label: 'Converter', icon: <Play size={18} fill="currentColor" className="text-inherit" /> },
-    { id: 'history', label: 'History', icon: <History size={18} /> },
-    { id: 'documentation', label: 'Documentation', icon: <BookOpen size={18} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={18} /> }
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
       
-      {/* LEFT SIDEBAR (Desktop) */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 shrink-0">
+      {/* LEFT CONTROL SIDEBAR (Desktop) */}
+      <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shrink-0 shadow-sm">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-100 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#fe4c6f] flex items-center justify-center text-white shadow-sm shadow-[#fe4c6f]/30">
             <Cpu size={18} className="animate-pulse" />
@@ -186,62 +129,126 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`sidebar-nav-${item.id}`}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-semibold transition cursor-pointer ${
-                  isActive 
-                    ? 'bg-[#fe4c6f]/10 text-[#fe4c6f]' 
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+        {/* Content Area */}
+        <div className="flex-1 px-5 py-6 space-y-6 overflow-y-auto">
+          {/* Quick Settings Section */}
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <Settings size={12} /> Pengaturan Konversi
+            </h3>
+            
+            <div className="space-y-3">
+              {/* Auto Download */}
+              <div className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-slate-700 block">Unduhan Otomatis</span>
+                  <span className="text-[10px] text-slate-400 block leading-tight">Unduh XML setelah selesai</span>
+                </div>
+                <button
+                  onClick={() => handleUpdateSettings({ autoDownload: !settings.autoDownload })}
+                  className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                    settings.autoDownload ? 'bg-[#fe4c6f]' : 'bg-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      settings.autoDownload ? 'right-0.5' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
 
-        {/* Footer Area with reset and info */}
-        <div className="p-4 border-t border-slate-100 space-y-2 shrink-0">
-          <button
-            onClick={handleResetAllStats}
-            className="flex items-center justify-center gap-2 px-3 py-2 w-full border border-slate-150 rounded-lg text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 cursor-pointer transition"
-          >
-            <RefreshCw size={12} />
-            Reset Dasbor Stats
-          </button>
-          
-          <button
-            onClick={() => setIsAboutOpen(true)}
-            className="flex items-center justify-center gap-2 px-3 py-2 w-full bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer transition"
-          >
-            <Info size={13} />
-            Tentang Pembuat
-          </button>
+              {/* Beautify XML */}
+              <div className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-slate-700 block">Rapikan Kode</span>
+                  <span className="text-[10px] text-slate-400 block leading-tight">Tata letak XML rapi</span>
+                </div>
+                <button
+                  disabled={settings.compressXml}
+                  onClick={() => handleUpdateSettings({ beautifyXml: !settings.beautifyXml })}
+                  className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                    settings.compressXml ? 'bg-slate-100 opacity-50 cursor-not-allowed' : (settings.beautifyXml ? 'bg-[#fe4c6f]' : 'bg-slate-200')
+                  }`}
+                >
+                  <span
+                    className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      !settings.compressXml && settings.beautifyXml ? 'right-0.5' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Compress XML */}
+              <div className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-slate-700 block">Kompresi XML</span>
+                  <span className="text-[10px] text-slate-400 block leading-tight">Hapus spasi/baris baru</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const newCompress = !settings.compressXml;
+                    handleUpdateSettings({
+                      compressXml: newCompress,
+                      beautifyXml: newCompress ? false : settings.beautifyXml
+                    });
+                  }}
+                  className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                    settings.compressXml ? 'bg-[#fe4c6f]' : 'bg-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      settings.compressXml ? 'right-0.5' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <FileText size={12} /> Statistik Sesi
+            </h3>
+            
+            <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                  <span className="text-[10px] text-slate-400 font-bold block">Diproses</span>
+                  <span className="text-lg font-bold text-slate-700">{stats.totalProcessed}</span>
+                </div>
+                <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
+                  <span className="text-[10px] text-slate-400 font-bold block">Berhasil</span>
+                  <span className="text-lg font-bold text-emerald-600">{stats.totalSuccess}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleResetAllStats}
+                className="flex items-center justify-center gap-1.5 py-1.5 w-full bg-white hover:bg-rose-50 hover:text-rose-600 border border-slate-200 hover:border-rose-100 rounded-lg text-[10px] font-bold text-slate-500 transition cursor-pointer"
+              >
+                <RefreshCw size={10} />
+                Reset Statistik
+              </button>
+            </div>
+          </div>
         </div>
+
       </aside>
 
-      {/* MOBILE HEADER & DRAWER */}
+      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* TOP NAVIGATION BAR */}
-        <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-30">
-          
-          {/* Mobile menu trigger / Brand */}
+        <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-sm">
+          {/* Mobile hamburger menu / Brand */}
           <div className="flex items-center gap-3 lg:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 cursor-pointer"
+              title="Menu Pengaturan"
             >
               <Menu size={20} />
             </button>
@@ -253,33 +260,24 @@ export default function App() {
             </div>
           </div>
 
-          {/* Tab indicator for desktop */}
           <div className="hidden lg:flex items-center gap-2 text-sm font-semibold text-slate-700">
             <span className="text-slate-400 font-medium">Blogger Builder</span>
             <span className="text-slate-300">/</span>
-            <span className="capitalize text-[#fe4c6f] font-bold">{activeTab}</span>
+            <span className="text-[#fe4c6f] font-bold">Studio Konversi Instant</span>
           </div>
 
-          {/* Actions / Information Right elements */}
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-[#fe4c6f] bg-[#fe4c6f]/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-[#fe4c6f] bg-[#fe4c6f]/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
               v1.0.0 Stable
             </span>
-            <button
-              onClick={() => setIsAboutOpen(true)}
-              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition shrink-0 cursor-pointer"
-              title="Tentang Konverter"
-            >
-              <Info size={16} />
-            </button>
           </div>
         </header>
 
-        {/* MOBILE MENU NAV DRAWER */}
+        {/* MOBILE SETTINGS & STATS DRAWER */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 bg-slate-900/40 z-40" onClick={() => setIsMobileMenuOpen(false)}>
             <div 
-              className="w-64 bg-white h-full flex flex-col p-4 animate-slide-right"
+              className="w-72 bg-white h-full flex flex-col p-4 animate-slide-right animate-fade-in"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
@@ -297,56 +295,113 @@ export default function App() {
                 </button>
               </div>
 
-              <nav className="flex-1 space-y-1">
-                {navItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  return (
+              {/* Mobile settings form elements */}
+              <div className="flex-1 space-y-6 overflow-y-auto">
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pengaturan Konversi</h3>
+                  
+                  {/* Auto Download */}
+                  <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-slate-700 block">Unduhan Otomatis</span>
+                    </div>
                     <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`flex items-center gap-3 px-4 py-2.5 w-full rounded-lg text-xs font-semibold transition cursor-pointer ${
-                        isActive 
-                          ? 'bg-[#fe4c6f]/10 text-[#fe4c6f]' 
-                          : 'text-slate-600 hover:bg-slate-50'
+                      onClick={() => handleUpdateSettings({ autoDownload: !settings.autoDownload })}
+                      className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                        settings.autoDownload ? 'bg-[#fe4c6f]' : 'bg-slate-200'
                       }`}
                     >
-                      {item.icon}
-                      {item.label}
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                          settings.autoDownload ? 'right-0.5' : 'left-0.5'
+                        }`}
+                      />
                     </button>
-                  );
-                })}
-              </nav>
+                  </div>
 
-              <div className="pt-4 border-t border-slate-100 space-y-2">
-                <button
-                  onClick={handleResetAllStats}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 w-full border border-slate-200 rounded text-[11px] font-bold text-slate-500 cursor-pointer"
-                >
-                  <RefreshCw size={11} />
-                  Reset Dasbor Stats
-                </button>
-                <button
-                  onClick={() => {
-                    setIsAboutOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 w-full bg-slate-100 rounded text-[11px] font-semibold text-slate-700 cursor-pointer"
-                >
-                  <Info size={11} />
-                  Tentang Pembuat
-                </button>
+                  {/* Beautify */}
+                  <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-slate-700 block">Rapikan Kode</span>
+                    </div>
+                    <button
+                      disabled={settings.compressXml}
+                      onClick={() => handleUpdateSettings({ beautifyXml: !settings.beautifyXml })}
+                      className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                        settings.compressXml ? 'bg-slate-100 opacity-50 cursor-not-allowed' : (settings.beautifyXml ? 'bg-[#fe4c6f]' : 'bg-slate-200')
+                      }`}
+                    >
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                          !settings.compressXml && settings.beautifyXml ? 'right-0.5' : 'left-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Compress */}
+                  <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-slate-700 block">Kompresi XML</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newCompress = !settings.compressXml;
+                        handleUpdateSettings({
+                          compressXml: newCompress,
+                          beautifyXml: newCompress ? false : settings.beautifyXml
+                        });
+                      }}
+                      className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                        settings.compressXml ? 'bg-[#fe4c6f]' : 'bg-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                          settings.compressXml ? 'right-0.5' : 'left-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Statistik Sesi</h3>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      <span className="text-[10px] text-slate-400 font-bold block">Diproses</span>
+                      <span className="text-base font-bold text-slate-700">{stats.totalProcessed}</span>
+                    </div>
+                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      <span className="text-[10px] text-slate-400 font-bold block">Berhasil</span>
+                      <span className="text-base font-bold text-emerald-600">{stats.totalSuccess}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleResetAllStats}
+                    className="flex items-center justify-center gap-1 px-3 py-2 w-full border border-slate-200 rounded text-xs font-bold text-slate-500 cursor-pointer"
+                  >
+                    <RefreshCw size={11} />
+                    Reset Statistik
+                  </button>
+                </div>
               </div>
+
             </div>
           </div>
         )}
 
         {/* MAIN BODY SCROLLABLE WINDOW */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl w-full mx-auto">
-          {renderActivePage()}
+          <ConverterPage settings={settings} onSaveHistory={handleSaveHistory} />
         </main>
+
+        {/* BOTTOM GLOBAL FOOTER */}
+        <footer className="bg-white border-t border-slate-200 py-6 px-4 md:px-8 text-center">
+          <div className="max-w-7xl mx-auto text-xs text-slate-500 font-medium">
+            &copy; 2026 Karya Prajurit Digital
+          </div>
+        </footer>
       </div>
 
       {/* ABOUT POPUP MODAL */}
@@ -392,7 +447,9 @@ export default function App() {
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
-              <span className="text-slate-400 font-semibold">Dibuat oleh AI Studio Developer</span>
+              <span className="text-slate-700 font-extrabold flex items-center gap-1">
+                <Heart size={12} className="text-[#fe4c6f] fill-[#fe4c6f]" /> Karya Prajurit Digital
+              </span>
               <button
                 onClick={() => setIsAboutOpen(false)}
                 className="px-5 py-2 bg-[#fe4c6f] hover:bg-[#e03a5a] text-white font-bold rounded-lg cursor-pointer transition text-center"

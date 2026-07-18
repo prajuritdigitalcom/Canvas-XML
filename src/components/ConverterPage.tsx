@@ -218,6 +218,20 @@ export default function ConverterPage({ settings, onSaveHistory }: ConverterPage
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleReset = () => {
+    setFile(null);
+    setHtmlContent('');
+    setAnalysis(null);
+    setXmlResult('');
+    setErrorMessage('');
+    setSearchQuery('');
+    setProgress(0);
+    setCurrentStageIndex(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   // Safe Highlight Matching
   const getHighlightCount = () => {
     if (!searchQuery || !xmlResult) return 0;
@@ -507,6 +521,15 @@ export default function ConverterPage({ settings, onSaveHistory }: ConverterPage
               >
                 <Download size={13} />
                 Unduh XML
+              </button>
+
+              {/* Reset */}
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold cursor-pointer transition active:scale-95"
+              >
+                <RefreshCw size={13} />
+                Reset / Mulai Baru
               </button>
 
               {/* Expand/Collapse */}
